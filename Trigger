@@ -1,3 +1,22 @@
+-- =====================================================================
+-- SIGER - 03 - Triggers
+-- ONDE RODAR: conectado ao banco "siger".
+-- =====================================================================
+
+
+-- ---------------------------------------------------------------------
+-- 1. AUDITORIA DE PRODUTO
+--
+--    Java -> DAO -> UPDATE produto -> TRIGGER -> AUDITORIA
+--
+-- Se alguém alterar o preço de um produto, a trigger guarda:
+--    usuário, operação, tabela, registro, valor antigo, valor novo e data.
+--
+-- OLD = linha ANTES do UPDATE      NEW = linha DEPOIS do UPDATE
+--
+-- current_setting('siger.usuario') = login de quem está usando o sistema
+-- (o Java grava esse valor com set_config logo depois do login).
+-- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION registrar_auditoria()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -18,3 +37,38 @@ CREATE TRIGGER trg_auditoria_produto
 AFTER UPDATE ON produto
 FOR EACH ROW
 EXECUTE FUNCTION registrar_auditoria();
+
+
+-- ---------------------------------------------------------------------
+-- 2. Todo produto novo ganha automaticamente sua linha de estoque (qtd 0)
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION criar_estoque_produto()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO estoque (id_produto, quantidade, estoque_minimo)
+    VALUES (NEW.id_produto, 0, 0);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_criar_estoque
+AFTER INSERT ON produto
+FOR EACH ROW
+EXECUTE FUNCTION criar_estoque_produto();
+
+
+-- ---------------------------------------------------------------------
+-- 3. Atualiza a data_atualizacao do estoque sempre que ele muda
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION atualizar_data_estoque()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.data_atualizacao := CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_data_estoque
+BEFORE UPDATE ON estoque
+FOR EACH ROW
+EXECUTE FUNCTION atualizar_data_estoque();
