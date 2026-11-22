@@ -1,0 +1,7 @@
+INSERT INTO role (nome)
+VALUES
+('ADMIN'),
+('GERENTE'),
+('VENDEDOR'),
+('ESTOQUISTA'),
+('CONSULTA');
