@@ -126,3 +126,13 @@ motivo VARCHAR (255),
 
 CONSTRAINT ck_auditoria_motivo_cancelamento CHECK (operacao<> 'CANCELAMENTO' OR motivo IS NOT NULL)
 );
+
+CREATE TABLE log_operacao (
+id_log SERIAL PRIMARY KEY,
+id_usuario INT REFERENCES usuario(id_usuario) ON DELETE SET NULL,
+operaca VARCHAR(30)  NOT NULL, -- VENDA, PERMISSAO_NEGADA, ENTRADA_ESTOQUE...
+tabela_afetada VARCHAR(50),
+resultado VARCHAR(20)  NOT NULL,      -- SUCESSO, ROLLBACK, NEGADO, ERRO
+descrica TEXT,
+data_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
